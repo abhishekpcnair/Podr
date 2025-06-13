@@ -10,27 +10,30 @@ from .k8s_client import get_k8s_client
 from .cleaner import find_and_process_pods
 from .job_generator import generate_cron_job_yaml
 
+VALID_PHASES = ["Succeeded", "Failed", "Terminated"]
+
+def validate_phase(value: str) -> str:
+    """Validate the pod phase argument."""
+    if value not in VALID_PHASES:
+        typer.echo(f"Error: Invalid phase '{value}'. Must be one of: {', '.join(VALID_PHASES)}")
+        sys.exit(1)
+    return value
+
+# Create the main app
 app = typer.Typer(
     name="podr",
     help="A CLI tool for cleaning up Kubernetes pods in specific states",
     add_completion=False,
 )
 
-VALID_PHASES = ["Succeeded", "Failed", "Terminated"]
+# Create a subcommand app for clean
+clean_app = typer.Typer(help="Clean up Kubernetes pods in specific states")
 
-def validate_phase(phase: str) -> str:
-    """Validate the pod phase argument."""
-    if phase not in VALID_PHASES:
-        typer.echo(f"Error: Invalid phase '{phase}'. Must be one of: {', '.join(VALID_PHASES)}")
-        sys.exit(1)
-    return phase
-
-@app.command()
-def clean(
-    state: str = typer.Argument(
+@clean_app.command()
+def pods(
+    phase: str = typer.Argument(
         ...,
         help="Pod phase to clean up (Succeeded, Failed, or Terminated)",
-        callback=validate_phase,
     ),
     namespace: Optional[str] = Option(
         None,
@@ -64,6 +67,9 @@ def clean(
     ),
 ):
     """Clean up Kubernetes pods in a specific state."""
+    # Validate the phase argument
+    phase = validate_phase(phase)
+
     if all_namespaces and namespace:
         typer.echo("Error: Cannot specify both --namespace and --all-namespaces")
         sys.exit(1)
@@ -79,7 +85,7 @@ def clean(
 
     if output_yaml:
         yaml_content = generate_cron_job_yaml(
-            state=state,
+            state=phase,
             namespace=namespace,
             all_namespaces=all_namespaces,
             interval=interval,
@@ -89,11 +95,17 @@ def clean(
     else:
         find_and_process_pods(
             k8s_client=k8s_client,
-            state=state,
+            state=phase,
             namespace=namespace,
             all_namespaces=all_namespaces,
             dry_run=dry_run,
         )
 
-if __name__ == "__main__":
+# Add the clean subcommand to the main app
+app.add_typer(clean_app, name="clean")
+
+def main():
     app()
+
+if __name__ == "__main__":
+    main()
