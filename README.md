@@ -1,8 +1,8 @@
 # Pod Reaper (`podr`) 💀
 
-[![Pytest](https://github.com/user/podr/actions/workflows/pytest.yml/badge.svg)](https://github.com/user/podr/actions/workflows/pytest.yml)
+[![Pytest](https://github.com/abhishekpcnair/Podr/actions/workflows/pytest.yml/badge.svg)](https://github.com/abhishekpcnair/Podr/actions/workflows/pytest.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/user/podr.svg?style=social&label=Star)](https://github.com/user/podr)
+[![GitHub stars](https://img.shields.io/github/stars/abhishekpcnair/Podr.svg?style=social&label=Star)](https://github.com/abhishekpcnair/Podr)
 
 **Tired of lingering Kubernetes pods and jobs cluttering your namespaces? Meet Pod Reaper, the ultimate cleanup tool for your cluster.**
 
@@ -64,7 +64,7 @@ podr jobs Failed --interval 900 --output
 
 ## 🧪 Development & Testing
 
-We believe in robust testing. `podr` comes with a full `pytest` suite and a script to generate test resources in your cluster.
+`podr` comes with a full `pytest` suite and a script to generate test resources in your cluster.
 
 ### Generating Test Resources
 
