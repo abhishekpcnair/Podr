@@ -22,6 +22,7 @@ wheels/
 
 # Virtual Environment
 venv/
+venv_py311/
 env/
 ENV/
 .env
