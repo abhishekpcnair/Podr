@@ -1,11 +1,11 @@
 """Kubernetes client module for Pod Reaper."""
 
 from kubernetes import client, config
-from kubernetes.client import CoreV1Api
+from kubernetes.client import CoreV1Api, BatchV1Api
 from kubernetes.config import ConfigException
 
-def get_k8s_client() -> CoreV1Api:
-    """Initialize and return a Kubernetes client."""
+def get_k8s_client() -> tuple[CoreV1Api, BatchV1Api]:
+    """Initialize and return Kubernetes clients."""
     try:
         # Try to load in-cluster config first
         config.load_incluster_config()
@@ -16,7 +16,7 @@ def get_k8s_client() -> CoreV1Api:
         except ConfigException as e:
             raise Exception("Failed to load Kubernetes configuration") from e
 
-    return client.CoreV1Api()
+    return client.CoreV1Api(), client.BatchV1Api()
 
 def list_pods(
     k8s_client: CoreV1Api,
@@ -47,3 +47,33 @@ def delete_pod(
         )
     except Exception as e:
         raise Exception(f"Failed to delete pod {pod_name} in namespace {namespace}: {e}")
+
+def list_jobs(
+    batch_client: BatchV1Api,
+    namespace: str = None,
+    all_namespaces: bool = False,
+) -> list:
+    """List jobs in the specified namespace(s)."""
+    if all_namespaces:
+        namespace = None
+
+    try:
+        if namespace:
+            return batch_client.list_namespaced_job(namespace=namespace).items
+        return batch_client.list_job_for_all_namespaces().items
+    except Exception as e:
+        raise Exception(f"Failed to list jobs: {e}")
+
+def delete_job(
+    batch_client: BatchV1Api,
+    job_name: str,
+    namespace: str,
+) -> None:
+    """Delete a job by name and namespace."""
+    try:
+        batch_client.delete_namespaced_job(
+            name=job_name,
+            namespace=namespace,
+        )
+    except Exception as e:
+        raise Exception(f"Failed to delete job {job_name} in namespace {namespace}: {e}")

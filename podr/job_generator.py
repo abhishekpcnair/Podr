@@ -4,15 +4,16 @@ import yaml
 from typing import Optional
 
 def generate_cron_job_yaml(
+    resource_type: str,
     state: str,
     namespace: Optional[str] = None,
     all_namespaces: bool = False,
     interval: Optional[int] = None,
     dry_run: bool = False,
 ) -> str:
-    """Generate Kubernetes CronJob YAML for pod cleanup."""
+    """Generate Kubernetes CronJob YAML for resource cleanup."""
     # Build the podr command
-    cmd = ["podr", "clean", state]
+    cmd = ["podr", "clean", resource_type, state]
     if namespace:
         cmd.extend(["-n", namespace])
     if all_namespaces:
@@ -35,7 +36,7 @@ def generate_cron_job_yaml(
         "apiVersion": "batch/v1",
         "kind": "CronJob",
         "metadata": {
-            "name": f"pod-reaper-{state.lower()}-cronjob",
+            "name": f"pod-reaper-{resource_type}-{state.lower()}-cronjob",
             "namespace": namespace or "default",
         },
         "spec": {
@@ -76,6 +77,21 @@ def generate_cron_job_yaml(
         }
     }
 
+    # Define resource rules based on resource type
+    resource_rules = []
+    if resource_type == "pods":
+        resource_rules.append({
+            "apiGroups": [""],
+            "resources": ["pods"],
+            "verbs": ["list", "delete"],
+        })
+    elif resource_type == "jobs":
+        resource_rules.append({
+            "apiGroups": ["batch"],
+            "resources": ["jobs"],
+            "verbs": ["list", "delete"],
+        })
+
     role = {
         "apiVersion": "rbac.authorization.k8s.io/v1",
         "kind": "Role",
@@ -83,13 +99,7 @@ def generate_cron_job_yaml(
             "name": "pod-reaper",
             "namespace": namespace or "default",
         },
-        "rules": [
-            {
-                "apiGroups": [""],
-                "resources": ["pods"],
-                "verbs": ["list", "delete"],
-            }
-        ]
+        "rules": resource_rules
     }
 
     role_binding = {
