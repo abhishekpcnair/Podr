@@ -23,3 +23,8 @@ podr = "podr.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["podr"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
