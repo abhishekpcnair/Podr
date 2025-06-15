@@ -1,8 +1,35 @@
-# Pod Reaper (podr)
+# Pod Reaper (`podr`) 💀
 
-A CLI tool for cleaning up Kubernetes pods in specific states.
+[![Pytest](https://github.com/user/podr/actions/workflows/pytest.yml/badge.svg)](https://github.com/user/podr/actions/workflows/pytest.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/user/podr.svg?style=social&label=Star)](https://github.com/user/podr)
 
-## Installation
+**Tired of lingering Kubernetes pods and jobs cluttering your namespaces? Meet Pod Reaper, the ultimate cleanup tool for your cluster.**
+
+`podr` is a simple but powerful CLI tool that finds Kubernetes pods and jobs in a specific state (like `Succeeded`, `Failed`, or `Error`) and deletes them. Stop manually running `kubectl delete` and automate your cluster hygiene!
+
+---
+
+### The Problem: A Messy Cluster
+
+In a dynamic Kubernetes environment, completed pods (`Succeeded`) and failed jobs (`Failed`) can accumulate quickly. This digital debris clutters your cluster, making it difficult to monitor and manage. While a few leftover resources might seem harmless, they can eventually:
+
+-   **Obscure real issues:** A long list of failed pods makes it hard to spot new, critical failures.
+-   **Consume resources:** In some cases, completed resources can still hold on to claims or other resources.
+-   **Create noise:** A messy `kubectl get pods` output is a daily annoyance for any developer or SRE.
+
+### Why Pod Reaper?
+
+-   **🎯 Simple & Specific:** Target exactly what you want to delete. Clean up `Succeeded` pods, `Failed` jobs, or pods in an `Error` state with a single, readable command.
+-   **🤖 Automation-Ready:** Generate Kubernetes `CronJob` YAML directly from the CLI. Set up a GitOps workflow to keep your cluster clean automatically.
+-   **🛡️ Safe & Predictable:** Use the `--dry-run` flag to see what `podr` *would* delete before making any changes. No surprises.
+-   **🌐 Namespace Flexible:** Clean the current namespace, a specific namespace, or all namespaces at once (`-A`).
+
+---
+
+## 🚀 Installation
+
+Install directly from PyPI:
 
 ```bash
 pip install podr
@@ -10,51 +37,74 @@ pip install podr
 
 ## Usage
 
-The main command is `podr clean`, which allows you to clean up pods in specific states:
+The command structure is simple: `podr <resource> <state> [options]`
+
+| Resource | Supported States                                    |
+| :------- | :-------------------------------------------------- |
+| `pods`   | `Succeeded`, `Failed`, `Error`, `Running`, `Pending`  |
+| `jobs`   | `Completed`, `Failed`, `Active`                     |
+
+**Examples:**
 
 ```bash
-# Clean up Succeeded pods in the current namespace
-podr clean Succeeded
+# See which 'Succeeded' pods would be deleted in the 'default' namespace
+podr pods Succeeded -n default --dry-run
 
-# Clean up Failed pods in a specific namespace
-podr clean Failed -n my-namespace
+# Delete all pods in an 'Error' state across the entire cluster
+podr pods Error -A
 
-# Clean up Terminated pods across all namespaces
-podr clean Terminated -A
+# Delete all 'Completed' jobs in the current namespace
+podr jobs Completed
 
-# Show what would be deleted without actually deleting
-podr clean Succeeded --dry-run
-
-# Generate a CronJob YAML that runs every 5 minutes
-podr clean Failed -t 300 -o yaml
+# Generate a CronJob YAML to clean failed jobs every 15 minutes
+podr jobs Failed --interval 900 --output
 ```
 
-### Supported States
+---
 
-- `Succeeded`: Pods that have completed successfully
-- `Failed`: Pods that have failed
-- `Terminated`: Pods that have been terminated
+## 🧪 Development & Testing
 
-### Options
+We believe in robust testing. `podr` comes with a full `pytest` suite and a script to generate test resources in your cluster.
 
-- `-n, --namespace`: Specify the namespace to clean pods from (defaults to current context namespace)
-- `-A, --all-namespaces`: Clean pods across all namespaces
-- `-t, --interval`: Generate a CronJob that runs every N seconds
-- `-o, --output`: Output Kubernetes Job/CronJob YAML instead of performing cleanup
-- `--dry-run`: Show what would be deleted without actually deleting
+### Generating Test Resources
 
-## Development
+To test `podr` in a real environment (like `minikube`), you can generate a sample set of pods and jobs.
 
-1. Clone the repository
-2. Install development dependencies:
-   ```bash
-   pip install -e ".[dev]"
-   ```
-3. Run tests:
-   ```bash
-   pytest
-   ```
+1.  **Target your cluster:** Make sure your `kubectl` context is pointing to the desired test cluster.
+2.  **Run the script:**
 
-## License
+    ```bash
+    python3 generate_test_resources.py
+    ```
 
-MIT
+This will create a new namespace `pod-reaper-test` and populate it with resources in various states, ready for reaping.
+
+### Running the Test Suite
+
+Run the full `pytest` suite locally:
+
+```bash
+make test
+```
+
+---
+
+## 🙌 How to Contribute
+
+We welcome contributions! Whether it's a bug fix, a new feature, or a documentation improvement, we'd love your help.
+
+1.  **Fork the repository.**
+2.  **Create a new branch:** `git checkout -b my-feature-branch`
+3.  **Set up your development environment:**
+    ```bash
+    make install-dev
+    ```
+4.  **Make your changes.**
+5.  **Run the tests:** `make test`
+6.  **Submit a pull request!**
+
+We'll review your PR as soon as possible.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
